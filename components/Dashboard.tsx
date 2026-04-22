@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-
 import { useEffect, useState, useRef } from "react";
 import { getRegistros, deleteRegistro, updateRegistro } from "@/lib/storage";
 import { filtrarPorPeriodo, calcularTotales } from "@/lib/utils";
@@ -14,7 +13,8 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { TrendingUp, TrendingDown, Wallet, Fuel } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Fuel, FileDown } from "lucide-react";
+import { exportarInformeMensual } from "@/lib/exportToExcel";
 import SelectorFecha from "@/components/SelectorFecha";
 import TablaRegistros from "@/components/TablaRegistros";
 
@@ -516,6 +516,29 @@ export default function Dashboard() {
   const pctIngresos = metaMensual > 0 ? (totalesMes.ingreso / metaMensual) * 100 : 0;
   const pctGastos = totalesMes.ingreso > 0 ? (gastosMes / totalesMes.ingreso) * 100 : 0;
 
+  const handleExportar = () => {
+    if (!fecha) return;
+    const registros = getRegistros() || [];
+    const registrosMes = filtrarPorPeriodo(registros, "mes", fecha) || [];
+
+    const mesLabel = new Date(fecha + "T12:00:00").toLocaleDateString("es-CO", {
+      month: "long",
+      year: "numeric",
+    });
+
+    exportarInformeMensual(
+      registrosMes,
+      {
+        ingreso: totalesMes.ingreso,
+        combustible: totalesMes.combustible,
+        otros: totalesMes.otros,
+        balance: balanceMes,
+        meta: metaMensual,
+      },
+      mesLabel
+    );
+  };
+
   return (
     <div
       style={{
@@ -587,6 +610,32 @@ export default function Dashboard() {
           </div>
 
           <SelectorFecha value={fecha} onChange={setFecha} />
+
+          {/* export button */}
+          <button
+            onClick={handleExportar}
+            title="Exportar informe mensual a Excel"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 14px",
+              fontSize: 13,
+              fontWeight: 500,
+              border: "0.5px solid #3B6D11",
+              borderRadius: "var(--border-radius-md)",
+              background: "#ffffff",
+              color: "#3B6D11",
+              cursor: "pointer",
+              transition: "background .15s",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#EAF3DE")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+          >
+            <FileDown size={14} />
+            Exportar mes
+          </button>
         </div>
       </div>
 
